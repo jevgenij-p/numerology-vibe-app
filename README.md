@@ -430,3 +430,161 @@ Before merging a change:
 
 TBD.
 
+
+## Windows setup notes
+
+This project was bootstrapped on Windows.
+
+### Recommended filesystem
+
+For Node.js / pnpm / Next.js development on Windows, use an NTFS drive.
+
+Avoid using exFAT drives for this project because pnpm may rely on symlinks or link-like behavior inside `node_modules`, and exFAT can cause installation failures.
+
+Recommended location example:
+
+```powershell
+C:\Codex\numerology-vibe-app
+````
+
+## Project bootstrap on Windows
+
+The repository already contained:
+
+```txt
+README.md
+AGENTS.md
+```
+
+Because the repository was not empty, the Next.js application was first created in a temporary folder and then copied into the main repository.
+
+### 1. Clone the repository
+
+```powershell
+cd C:\Codex
+git clone git@github.com:<your-github-username>/numerology-vibe-app.git
+cd numerology-vibe-app
+```
+
+### 2. Create a working branch
+
+```powershell
+git checkout -b chore/bootstrap-next-app
+```
+
+### 3. Create a temporary Next.js app
+
+From `C:\Codex`:
+
+```powershell
+cd C:\Codex
+
+pnpm create next-app@latest numerology-vibe-app-tmp `
+  --typescript `
+  --eslint `
+  --app `
+  --src-dir `
+  --tailwind `
+  --import-alias "@/*" `
+  --use-pnpm
+```
+
+If pnpm reports ignored build scripts for packages such as `sharp` or `unrs-resolver`, go into the temporary project and approve only those builds:
+
+```powershell
+cd C:\Codex\numerology-vibe-app-tmp
+
+pnpm approve-builds sharp unrs-resolver
+pnpm install
+```
+
+### 4. Verify the temporary app
+
+```powershell
+pnpm dev
+```
+
+Open:
+
+```txt
+http://localhost:3000
+```
+
+Stop the dev server with `Ctrl+C`.
+
+### 5. Copy the generated app into the main repository
+
+```powershell
+cd C:\Codex
+
+robocopy .\numerology-vibe-app-tmp .\numerology-vibe-app /E /XD .git node_modules .next /XF README.md AGENTS.md
+```
+
+`robocopy` may return exit code `1`. This is usually fine and means that files were copied.
+
+### 6. Remove the temporary app
+
+```powershell
+Remove-Item .\numerology-vibe-app-tmp -Recurse -Force
+```
+
+### 7. Install dependencies in the main repository
+
+```powershell
+cd C:\Codex\numerology-vibe-app
+
+pnpm install
+```
+
+If pnpm again reports ignored build scripts:
+
+```powershell
+pnpm approve-builds sharp unrs-resolver
+pnpm install
+```
+
+### 8. Add the typecheck script
+
+If `pnpm typecheck` fails with:
+
+```txt
+Command "typecheck" not found
+```
+
+add the script to `package.json`:
+
+```powershell
+npm pkg set scripts.typecheck="tsc --noEmit"
+```
+
+Then run:
+
+```powershell
+pnpm typecheck
+```
+
+## Local validation
+
+Before committing, run:
+
+```powershell
+pnpm dev
+pnpm build
+pnpm typecheck
+```
+
+Optional, if the lint script exists:
+
+```powershell
+pnpm lint
+```
+
+## Commit bootstrap
+
+```powershell
+git status
+git add .
+git commit -m "chore: bootstrap Next.js application"
+git push -u origin chore/bootstrap-next-app
+```
+
